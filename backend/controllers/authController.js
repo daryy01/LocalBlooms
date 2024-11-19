@@ -1,51 +1,55 @@
+const mysql = require("mysql2/promise");
 const bcrypt = require("bcrypt");
-const db = require("../config/db");
+const jwt = require("jsonwebtoken");
 
-// Handle user registration
-const registerUser = (req, res) => {
-  const { name, email, password } = req.body;
+// MySQL database connection (using connection pool)
+const db = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+});
 
-  bcrypt.hash(password, 10, (err, hashedPassword) => {
-    if (err) {
-      return res.status(500).json({ message: "Error hashing password" });
-    }
-
-    const query = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
-    db.query(query, [name, email, hashedPassword], (err, result) => {
-      if (err) {
-        return res.status(500).json({ message: "Database error" });
-      }
-      res.status(200).json({ message: "User registered successfully!" });
-    });
-  });
-};
-
-// Handle user login
-const loginUser = (req, res) => {
+// Login logic
+const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
-  const query = "SELECT * FROM users WHERE email = ?";
-  db.query(query, [email], async (err, results) => {
-    if (err) {
-      return res.status(500).json({ message: "Database error" });
+  try {
+    // Find the user by email in the database
+    const [rows] = await db.execute("SELECT * FROM users WHERE email = ?", [
+      email,
+    ]);
+
+    if (rows.length === 0) {
+      return res.status(400).json({ error: "Invalid credentials" });
     }
 
-    if (results.length === 0) {
-      return res.status(400).json({ message: "Invalid email or password" });
-    }
+    const user = rows[0];
 
-    const user = results[0];
+    // Compare entered password with stored hash
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return res.status(400).json({ message: "Invalid email or password" });
+      return res.status(400).json({ error: "Invalid credentials" });
     }
 
-    res.status(200).json({ message: "Login successful", user });
-  });
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // Send response with token and user data
+    res.json({
+      message: "Login successful",
+      token,
+      user: { id: user.id, name: user.name, email: user.email },
+    });
+  } catch (err) {
+    console.error("Error during login:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 };
 
-module.exports = {
-  registerUser,
-  loginUser,
-};
+module.exports = { loginUser };

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // Create CartContext
 const CartContext = createContext();
@@ -6,6 +6,18 @@ const CartContext = createContext();
 // CartProvider to provide the cart state and actions to the app
 export function CartProvider({ children }) {
   const [cart, setCart] = useState([]);
+  const [orders, setOrders] = useState([]);
+
+  // Load orders from localStorage on initial render
+  useEffect(() => {
+    const storedOrders = JSON.parse(localStorage.getItem('orders')) || [];
+    setOrders(storedOrders);
+  }, []);
+
+  // Save orders to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('orders', JSON.stringify(orders));
+  }, [orders]);
 
   // Add item to the cart
   const addToCart = (product) => {
@@ -47,13 +59,36 @@ export function CartProvider({ children }) {
     setCart([]);
   };
 
-  // Get total price
+  // Checkout: Save cart as a new order and clear the cart
+  const checkout = () => {
+    const newOrder = {
+      id: Date.now(), // Unique order ID
+      items: cart,
+      total: getTotalPrice(),
+      date: new Date().toLocaleString(),
+    };
+
+    setOrders((prevOrders) => [...prevOrders, newOrder]); // Add new order to state
+    clearCart(); // Clear the cart after checkout
+  };
+
+  // Get total price of items in the cart
   const getTotalPrice = () => {
     return cart.reduce((total, product) => total + product.price * product.quantity, 0);
   };
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, getTotalPrice }}>
+    <CartContext.Provider
+      value={{
+        cart,
+        orders,
+        addToCart,
+        removeFromCart,
+        clearCart,
+        checkout,
+        getTotalPrice,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );

@@ -1,10 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaUserCircle, FaShopify, FaSignOutAlt } from 'react-icons/fa'; // Icons for a more professional look
+import { FaUserCircle, FaShopify, FaSignOutAlt } from 'react-icons/fa';
 
 const Account = () => {
+  const [user, setUser] = useState(null); // Store user info
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  // Fetch user info from localStorage on component mount
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData)); // Parse and set user data
+    } else {
+      setError('User not found. Please log in again.');
+      navigate('/login'); // Redirect to login if no user data found
+    }
+  }, [navigate]);
 
   const handleAddShop = () => {
     navigate('/add-shop');
@@ -52,36 +64,41 @@ const Account = () => {
 
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">Personal Information</h3>
-            <p className="text-lg text-gray-600">
-              <strong>Name:</strong> John Doe
-            </p>
-            <p className="text-lg text-gray-600">
-              <strong>Email:</strong> john.doe@example.com
-            </p>
-           
-          </div>
+          {user ? (
+            <>
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">Personal Information</h3>
+                <p className="text-lg text-gray-600">
+                  <strong>Name:</strong> {user.name}
+                </p>
+                <p className="text-lg text-gray-600">
+                  <strong>Email:</strong> {user.email}
+                </p>
+              </div>
 
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">Account Settings</h3>
-            <button
-              onClick={handleAddShop}
-              className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 mb-4"
-            >
-              Add Your Shop
-            </button>
-          </div>
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">Account Settings</h3>
+                <button
+                  onClick={handleAddShop}
+                  className="w-full bg-pink-500 text-white py-3 rounded-lg font-semibold hover:bg-pink-600 mb-4"
+                >
+                  Add Your Shop
+                </button>
+              </div>
 
-          <div className="text-center">
-            <button
-              onClick={handleLogout}
-              className="w-full bg-gray-300 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-400 flex items-center justify-center gap-2"
-            >
-              <FaSignOutAlt />
-              Logout
-            </button>
-          </div>
+              <div className="text-center">
+                <button
+                  onClick={handleLogout}
+                  className="w-full bg-gray-300 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-400 flex items-center justify-center gap-2"
+                >
+                  <FaSignOutAlt />
+                  Logout
+                </button>
+              </div>
+            </>
+          ) : (
+            <p>Loading user data...</p> // Optional loading message
+          )}
         </div>
       </div>
     </div>

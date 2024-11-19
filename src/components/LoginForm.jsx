@@ -28,11 +28,12 @@ const LoginForm = () => {
 
       setSuccess(true);
       setTimeout(() => {
-        navigate('/home');  // Redirect after successful login
-      }, 2000);  // Wait for 2 seconds before redirect
+        navigate('/home');
+      }, 2000); 
 
     } catch (error) {
-      setError(error.response?.data || 'An error occurred. Please try again.');
+      console.error(error); 
+      setError(error.response?.data?.message || 'An error occurred. Please try again.');
     } finally {
       setLoading(false);
     }

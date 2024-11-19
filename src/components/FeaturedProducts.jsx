@@ -4,12 +4,12 @@ const FeaturedProducts = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const products = [
-    { id: 1, name: 'Product 1', description: 'Description 1', price: 29.99, image: '/samp1.jpg' },
-    { id: 2, name: 'Product 2', description: 'Description 2', price: 39.99, image: '/samp22.jpg' },
-    { id: 3, name: 'Product 3', description: 'Description 3', price: 49.99, image: '/samp3.jpg' },
-    { id: 4, name: 'Product 4', description: 'Description 4', price: 59.99, image: '/samp4.jpg' },
-    { id: 5, name: 'Product 5', description: 'Description 5', price: 69.99, image: '/samp5.jpg' },
-    { id: 6, name: 'Product 6', description: 'Description 6', price: 79.99, image: '/samp6.jpg' }
+    { id: 1, name: 'Sunflower Bouquet', description: 'A vibrant sunflower arrangement.', price: 1200, image: '/samp1.jpg' },
+    { id: 2, name: 'Pink Blossom', description: 'Soft pink flowers in full bloom.', price: 1800, image: '/samp22.jpg' },
+    { id: 3, name: 'White Mix', description: 'A classic bouquet of white flowers.', price: 1500, image: '/samp3.jpg' },
+    { id: 4, name: 'Dandelion Brue', description: 'An elegant bouquet with a unique touch.', price: 2200, image: '/samp4.jpg' },
+    { id: 5, name: 'Special Bouquet', description: 'Perfect for special occasions.', price: 2500, image: '/samp5.jpg' },
+    { id: 6, name: 'Romantico', description: 'A romantic arrangement of red roses.', price: 3000, image: '/samp6.jpg' },
   ];
 
   const itemsToShow = 3;
@@ -43,8 +43,10 @@ const FeaturedProducts = () => {
               />
               <h3 className="text-xl font-bold mt-4">{product.name}</h3>
               <p className="text-gray-700">{product.description}</p>
-              <p className="text-2xl font-bold mt-4">${product.price}</p>
-              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4">Add to Cart</button>
+              <p className="text-2xl font-bold mt-4">₱{product.price.toLocaleString()}</p>
+              <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4">
+                Add to Cart
+              </button>
             </div>
           ))}
         </div>

@@ -1,129 +1,123 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { sellers, products } from '../../services/dataService';
 
 const LandingPage = () => {
   const [topRatedShops, setTopRatedShops] = useState([]);
   const [bestSellers, setBestSellers] = useState([]);
-  const [promotions, setPromotions] = useState([]);
-  const [featuredShops, setFeaturedShops] = useState([]);
+  const [featuredShop, setFeaturedShop] = useState(null);
   const navigate = useNavigate();
 
-  // Simulated fetch calls (replace with actual API calls)
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     if (token) {
       navigate('/home');
     }
 
-    // Fetch dynamic content
+    // Load content dynamically
     fetchTopRatedShops();
     fetchBestSellers();
-    fetchPromotions();
-    fetchFeaturedShops();
+    setFeaturedShop(sellers[0]); // Assume the first seller is featured
   }, [navigate]);
 
   const fetchTopRatedShops = () => {
-    // Simulate fetching top-rated shops
-    setTopRatedShops([
-      { name: 'Bloom & Co.', rating: 4.9 },
-      { name: 'Floral Fantasy', rating: 4.8 },
-      { name: 'Petals and Stems', rating: 4.7 },
-    ]);
+    setTopRatedShops(sellers.slice(0, 3)); // Top 3 shops from sellers
   };
 
   const fetchBestSellers = () => {
-    // Simulate fetching best-selling flowers
-    setBestSellers([
-      { name: 'Rose Bouquet', image: '/rb.jpg' },
-      { name: 'Tulip Delight', image: '/tb.jpg' },
-      { name: 'Lilies of Love', image: '/lb.jpg' },
-    ]);
+    const allProducts = Object.values(products).flat();
+    setBestSellers(allProducts.slice(0, 4)); // Get first 4 best-selling products
   };
 
-  const fetchPromotions = () => {
-    // Simulate fetching promotions
-    setPromotions([
-      { title: 'Spring Sale - 20% Off', discount: '20%' },
-      { title: 'Buy One, Get One Free on Select Flowers', discount: 'BOGO' },
-    ]);
-  };
-
-  const fetchFeaturedShops = () => {
-    // Simulate fetching featured shops
-    setFeaturedShops([
-      { name: 'Petals & Blooms', specialOffer: 'Free Delivery on Orders Over $50' },
-      { name: 'Flower Haven', specialOffer: '10% Off for First-Time Buyers' },
-    ]);
+  const handleExploreShop = (shopId) => {
+    navigate(`/shops/${shopId}`); // Navigate to the specific shop page
   };
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Hero Section */}
       <section
-        className="bg-cover bg-center bg-no-repeat h-screen flex items-center justify-center"
-        style={{ backgroundImage: "url('flobg1.jpg')" }}
+        className="bg-cover bg-center h-screen flex items-center justify-center"
+        style={{ backgroundImage: "url('/flobg1.jpg')" }}
       >
-        <div className="text-center text-black">
-          <h1 className="text-mediumcarmine text-5xl font-bold">Fresh Flowers, Delivered Daily</h1>
-          <p className="text-birch text-lg mt-4">Your one-stop shop for beautiful blooms.</p>
+        <div className="text-center text-white bg-opacity-60 bg-black p-8 rounded-lg">
+          <h1 className="text-5xl font-bold">Welcome to LocalBlooms</h1>
+          <p className="text-lg mt-4">
+            Freshly-picked blooms for every occasion, straight from your favorite local florists.
+          </p>
           <Link to="/login">
-            <button className="bg-pink-800 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4">
-              Log In / Sign Up
+            <button className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 px-6 rounded mt-6">
+              Get Started
             </button>
           </Link>
         </div>
       </section>
 
-      {/* Top Rated Shops Section */}
-      <section className="py-10 bg-pink-100">
-        <h2 className="text-3xl font-semibold text-center text-pink-600">Top Rated Flower Shops</h2>
-        <div className="flex justify-center space-x-4 mt-6">
-          {topRatedShops.map((shop, index) => (
-            <div key={index} className="p-6 bg-white rounded-lg shadow-lg">
+      {/* Top Rated Flower Shops Section */}
+      <section className="py-12 bg-pink-50">
+        <h2 className="text-4xl font-semibold text-center text-pink-700">Top Rated Flower Shops</h2>
+        <div className="mt-8 flex justify-center space-x-8">
+          {topRatedShops.map((shop) => (
+            <div
+              key={shop.id}
+              className="p-6 bg-white rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+            >
+              <img
+                src={shop.image}
+                alt={shop.name}
+                className="w-full h-40 object-cover rounded-md mb-4"
+              />
               <h3 className="text-xl font-bold text-pink-800">{shop.name}</h3>
-              <p className="text-gray-500">Rating: {shop.rating} / 5</p>
+              <p className="text-gray-600 mt-2">{shop.description}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Best Seller Flowers Section */}
-      <section className="py-10 bg-white">
-        <h2 className="text-3xl font-semibold text-center text-pink-600">Best Seller Flowers</h2>
-        <div className="flex justify-center space-x-4 mt-6">
-          {bestSellers.map((flower, index) => (
-            <div key={index} className="text-center p-4 bg-white shadow-lg rounded-lg">
-              <img src={flower.image} alt={flower.name} className="w-48 h-48 object-cover rounded-md mx-auto" />
-              <h3 className="text-xl font-bold text-pink-800 mt-4">{flower.name}</h3>
+      <section className="py-12 bg-white">
+        <h2 className="text-4xl font-semibold text-center text-pink-700">Best Seller Flowers</h2>
+        <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-8 px-8">
+          {bestSellers.map((product) => (
+            <div
+              key={product.id}
+              className="p-4 bg-pink-50 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+            >
+              <img
+                src={product.image}
+                alt={product.name}
+                className="w-full h-48 object-cover rounded-md"
+              />
+              <h3 className="text-lg font-bold text-pink-800 mt-4">{product.name}</h3>
+              <p className="text-gray-600 mt-2">Price: ₱{product.price}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Promotions Section */}
-      <section className="py-10 bg-pink-200">
-        <h2 className="text-3xl font-semibold text-center text-pink-600">Current Promotions</h2>
-        <div className="flex justify-center space-x-4 mt-6">
-          {promotions.map((promo, index) => (
-            <div key={index} className="p-6 bg-white rounded-lg shadow-lg w-64 text-center">
-              <h3 className="text-xl font-bold text-pink-800">{promo.title}</h3>
-              <p className="text-lg text-gray-500">Save {promo.discount}</p>
+      {/* Featured Advertisement Section */}
+      {featuredShop && (
+        <section className="py-12 bg-pink-100">
+          <h2 className="text-4xl font-semibold text-center text-pink-700">Featured Advertisement</h2>
+          <div className="mt-8 flex justify-center">
+            <div className="p-8 bg-pink-50 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all">
+              <img
+                src={featuredShop.image}
+                alt={featuredShop.name}
+                className="w-full h-40 object-cover rounded-md mb-4"
+              />
+              <h3 className="text-2xl font-bold text-pink-800">{featuredShop.name}</h3>
+              <p className="text-gray-600 mt-4">{featuredShop.description}</p>
+              <button
+                onClick={() => handleExploreShop(featuredShop.id)}
+                className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded mt-6"
+              >
+                Explore Now
+              </button>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Featured Flower Shops Section */}
-      <section className="py-10 bg-white">
-        <h2 className="text-3xl font-semibold text-center text-pink-600">Featured Flower Shops</h2>
-        <div className="flex justify-center space-x-4 mt-6">
-          {featuredShops.map((shop, index) => (
-            <div key={index} className="p-6 bg-white rounded-lg shadow-lg w-64 text-center">
-              <h3 className="text-xl font-bold text-pink-800">{shop.name}</h3>
-              <p className="text-gray-500">{shop.specialOffer}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
     </div>
   );
 };

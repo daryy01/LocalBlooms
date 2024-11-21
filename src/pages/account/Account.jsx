@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaUserCircle, FaShopify, FaSignOutAlt } from 'react-icons/fa';
 
 const Account = () => {
-  const [user, setUser] = useState(null); // Store user info
+  const [user, setUser] = useState(null); 
   const [error, setError] = useState('');
   const navigate = useNavigate();
 

@@ -7,6 +7,9 @@ const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const path = require("path");
 
+// Import authMiddleware
+const authMiddleware = require("./middleware/authMiddleware");
+
 dotenv.config();
 
 const app = express();
@@ -25,10 +28,10 @@ app.use(express.json());
 
 // MySQL database connection
 const db = mysql.createConnection({
-  host: process.env.DB_HOST, // The host for your MySQL database (usually localhost)
-  user: process.env.DB_USER, // MySQL username
-  password: process.env.DB_PASSWORD, // MySQL password
-  database: process.env.DB_NAME, // MySQL database name
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
 });
 
 db.connect((err) => {
@@ -43,7 +46,6 @@ db.connect((err) => {
 app.post("/api/register", async (req, res) => {
   const { name, email, password } = req.body;
 
-  // Check if the email already exists in the database
   db.query(
     "SELECT * FROM users WHERE email = ?",
     [email],
@@ -56,10 +58,8 @@ app.post("/api/register", async (req, res) => {
         return res.status(400).json({ error: "Email already exists" });
       }
 
-      // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Insert new user into the database
       db.query(
         "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
         [name, email, hashedPassword],
@@ -92,72 +92,62 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Route to add a shop along with products
+// Add Shop route (protected by authMiddleware)
 app.post(
   "/api/add-shop",
-  upload.fields([
-    { name: "shopImage" }, // Field for shop image
-    { name: "productImage[]" }, // Multiple fields for product images
-  ]),
-  (req, res) => {
-    // Extract form data from the request
+  authMiddleware, // Ensure the user is authenticated
+  upload.single("shopImage"), // Single shop image upload
+  async (req, res) => {
     const { shopName, shopDescription, shopLocation } = req.body;
-    const shopImage = req.files["shopImage"]
-      ? req.files["shopImage"][0].filename
-      : null;
+    const shopImage = req.file ? req.file.filename : null; // Get the uploaded shop image filename
 
-    // Insert shop data into the shops table
-    const query = `INSERT INTO shops (user_id, shop_name, shop_image, shop_location, shop_description) 
-                 VALUES (?, ?, ?, ?, ?)`;
+    try {
+      // Insert shop into database
+      const [result] = await db.execute(
+        `INSERT INTO shops (user_id, shop_name, shop_image, shop_location, shop_description) 
+        VALUES (?, ?, ?, ?, ?)`,
+        [req.user.id, shopName, shopImage, shopLocation, shopDescription]
+      );
 
-    const userId = req.user.id; // Assuming user ID is available in req.user
+      // Handle product insertions
+      const products = [];
+      Object.keys(req.body).forEach((key) => {
+        if (key.startsWith("productName")) {
+          const index = key.match(/\d+/)[0];
+          const productName = req.body[`productName[${index}]`];
+          const productImage = req.files[`productImage[${index}]`]
+            ? req.files[`productImage[${index}]`][0].filename
+            : null;
 
-    db.query(
-      query,
-      [userId, shop_name, shop_image, shop_location, shop_description],
-      (err, result) => {
-        if (err) {
-          console.error(err);
-          return res.status(500).send("Error saving shop data");
+          products.push({ productName, productImage });
         }
+      });
 
-        const shopId = result.insertId; // Get the shop ID
+      const productQuery = `INSERT INTO products (shop_id, product_name, product_image) 
+                            VALUES (?, ?, ?)`;
 
-        // Handle product insertions
-        const products = [];
-        Object.keys(req.body).forEach((key) => {
-          if (key.startsWith("productName")) {
-            const index = key.match(/\d+/)[0];
-            const productName = req.body[`productName[${index}]`];
-            const productImage = req.files[`productImage[${index}]`]
-              ? req.files[`productImage[${index}]`][0].filename
-              : null;
-
-            products.push({ productName, productImage });
-          }
-        });
-
-        // Insert each product into the products table
-        const productQuery = `INSERT INTO products (shop_id, product_name, product_image) 
-                          VALUES (?, ?, ?)`;
-
-        products.forEach((product) => {
-          db.query(
-            productQuery,
-            [shopId, product.productName, product.productImage],
-            (err, result) => {
-              if (err) {
-                console.error(err);
-                return res.status(500).send("Error saving product data");
-              }
+      products.forEach((product) => {
+        db.query(
+          productQuery,
+          [result.insertId, product.productName, product.productImage],
+          (err) => {
+            if (err) {
+              console.error(err);
+              return res.status(500).send("Error saving product data");
             }
-          );
-        });
+          }
+        );
+      });
 
-        // Return the shop ID in response
-        res.status(200).json({ shopId });
-      }
-    );
+      // Respond with shop id after successfully adding products
+      res.status(201).json({
+        message: "Shop and products added successfully",
+        shopId: result.insertId,
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Error adding shop and products" });
+    }
   }
 );
 

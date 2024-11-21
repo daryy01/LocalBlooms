@@ -12,7 +12,7 @@ import CartPage from './pages/cart/CartPage.jsx';
 import Account from './pages/account/Account.jsx';
 import AddShop from './pages/account/AddShop.jsx';
 import LandingPage from './pages/landingpage/LandingPage.jsx';
-import OrdersPage from './pages/orders/OrdersPage.jsx'; // Import Orders page
+import OrdersPage from './pages/orders/OrdersPage.jsx'; 
 
 const router = createBrowserRouter([
   {
@@ -24,11 +24,11 @@ const router = createBrowserRouter([
       { path: '/login', element: <Login /> },
       { path: '/register', element: <Register /> },
       { path: '/shops', element: <ShopPage /> },
-      { path: '/shop/:sellerId', element: <SellerShop /> },
+      { path: '/shops/:sellerId', element: <SellerShop /> },
       { path: '/cart', element: <CartPage /> },
       { path: '/account', element: <Account /> },
       { path: '/add-shop', element: <AddShop /> },
-      { path: '/orders', element: <OrdersPage /> }, // Add Orders page route
+      { path: '/orders', element: <OrdersPage /> }, 
     ],
   },
 ]);

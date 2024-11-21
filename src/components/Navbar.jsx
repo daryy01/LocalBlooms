@@ -30,20 +30,19 @@ function Navbar() {
   };
 
   return (
-    <header className="px-4 bg-white shadow-md">
-      <nav className="flex justify-between items-center container mx-auto md:py-4 pt-6 pb-3">
-        
+    <header className="bg-white shadow-md px-4 py-3">
+      <nav className="flex justify-between items-center container mx-auto">
         {/* Logo and Title */}
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-gray-800">LocalBlooms</h1>
+          <h1 className="text-2xl font-extrabold text-pink-600">LocalBlooms</h1>
         </div>
 
-        {/* Navigation Links */}
+        {/* Navigation Links for Desktop */}
         <div className="hidden sm:flex items-center gap-6 text-gray-600">
-          <Link to="/" className="flex items-center gap-2 hover:text-pink-700">
+          <Link to="/" className="flex items-center gap-2 hover:text-pink-700 transition-all">
             <FaHome /> Home
           </Link>
-          <Link to="/shops" className="flex items-center gap-2 hover:text-pink-700">
+          <Link to="/shops" className="flex items-center gap-2 hover:text-pink-700 transition-all">
             <CiShop /> Shops
           </Link>
           <Link to="/cart" className="flex items-center gap-2 hover:text-pink-700 relative">
@@ -54,45 +53,43 @@ function Navbar() {
               </span>
             )}
           </Link>
-          <Link to="/account" className="flex items-center gap-2 hover:text-pink-700">
+          <Link to="/account" className="flex items-center gap-2 hover:text-pink-700 transition-all">
             <FaUser /> Account
           </Link>
 
           {/* Conditional rendering for Login/Register or User Info */}
           {isLoggedIn ? (
             <div className="flex items-center space-x-4">
-              <span className="text-xl font-semibold text-pink-600">Welcome, {userName}!</span>
+              <span className="text-lg font-semibold text-pink-600">Welcome, {userName}!</span>
               <button 
                 onClick={handleLogout} 
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all">
                 Log Out
               </button>
             </div>
           ) : (
             <div className="flex items-center space-x-4">
               <Link to="/login">
-                <button className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700">
+                <button className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-all">
                   Log In
                 </button>
               </Link>
               <Link to="/register">
-                <button className="px-4 py-2 bg-transparent border-2 border-pink-600 text-pink-600 rounded-lg hover:bg-pink-100">
+                <button className="px-4 py-2 bg-transparent border-2 border-pink-600 text-pink-600 rounded-lg hover:bg-pink-100 transition-all">
                   Sign Up
                 </button>
               </Link>
             </div>
           )}
-
         </div>
 
         {/* Mobile Menu Icon */}
         <div className="sm:hidden flex items-center">
-          <button className="text-gray-800 focus:outline-none">
+          <button className="text-gray-800 focus:outline-none text-2xl">
             ☰
           </button>
         </div>
       </nav>
-      <hr />
     </header>
   );
 }

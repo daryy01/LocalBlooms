@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const AddShop = () => {
   const [shopName, setShopName] = useState('');
@@ -7,7 +8,12 @@ const AddShop = () => {
   const [location, setLocation] = useState('');
   const [image, setImage] = useState(null);
   const [products, setProducts] = useState([{ name: '', image: null }]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  // Getting the token from local storage (or any other source)
+  const token = localStorage.getItem('token'); 
 
   const handleImageChange = (e) => {
     setImage(e.target.files[0]);
@@ -23,38 +29,58 @@ const AddShop = () => {
     setProducts([...products, { name: '', image: null }]);
   };
 
+  const handleProductImageChange = (index, e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const updatedProducts = [...products];
+      updatedProducts[index].image = file;
+      setProducts(updatedProducts);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Prepare form data for shop and products
+    setIsLoading(true);
+    setError('');
+
+    if (!shopName || !description || !location || !image) {
+      setError('Please fill all required fields.');
+      setIsLoading(false);
+      return;
+    }
+
     const formData = new FormData();
     formData.append('shopName', shopName);
     formData.append('shopDescription', description);
     formData.append('shopLocation', location);
     formData.append('shopImage', image);
-    
-    // Loop through products to add them to formData
+
     products.forEach((product, index) => {
       formData.append(`productName[${index}]`, product.name);
       if (product.image) {
         formData.append(`productImage[${index}]`, product.image);
       }
     });
-    
+
     try {
-      const response = await fetch('http://localhost:5000/api/add-shop', {
-        method: 'POST',
-        body: formData,
+      const response = await axios.post('http://localhost:5000/api/add-shop', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+        },
       });
-      
-      if (response.ok) {
-        navigate('/account');  // Navigate to account page after success
+
+      if (response.status === 201) {
+        setError(''); // Reset error on success
+        navigate('/account');
       } else {
-        alert('Error adding shop.');
+        setError('Error adding shop. Please try again later.');
       }
     } catch (error) {
       console.error(error);
-      alert('Error adding shop.');
+      setError('Error adding shop. Please try again later.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -63,6 +89,8 @@ const AddShop = () => {
       <h2 className="text-3xl font-extrabold text-center mb-6 text-pink-600">Add Your Floral Shop</h2>
       <form onSubmit={handleSubmit} className="space-y-6 bg-white bg-opacity-90 p-6 rounded-lg">
         
+        {error && <div className="bg-red-500 text-white p-2 rounded-md mb-4">{error}</div>}
+
         <div className="space-y-2">
           <label className="block text-lg text-gray-700">Shop Name</label>
           <input
@@ -126,11 +154,7 @@ const AddShop = () => {
                 <input
                   type="file"
                   name="image"
-                  onChange={(e) => {
-                    const updatedProducts = [...products];
-                    updatedProducts[index].image = e.target.files[0];
-                    setProducts(updatedProducts);
-                  }}
+                  onChange={(e) => handleProductImageChange(index, e)}
                   className="w-full p-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
                 />
               </div>
@@ -150,8 +174,9 @@ const AddShop = () => {
           <button
             type="submit"
             className="w-full bg-pink-600 text-white py-3 rounded-md hover:bg-pink-700 transition duration-200"
+            disabled={isLoading}
           >
-            Submit Shop
+            {isLoading ? 'Submitting...' : 'Submit Shop'}
           </button>
         </div>
       </form>

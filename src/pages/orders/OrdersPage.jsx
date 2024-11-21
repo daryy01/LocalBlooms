@@ -1,53 +1,42 @@
 import React, { useState } from 'react';
-import { useCart } from '../../context/CartContext'; // Assuming you have setOrders available here
+import { useCart } from '../../context/CartContext'; 
 import { FaStar } from 'react-icons/fa';
 
 function OrdersPage() {
-  const { orders, setOrders } = useCart(); // Assuming `setOrders` is available for updating the orders
+  const { orders, setOrders, addReview } = useCart(); 
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [review, setReview] = useState('');
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [cancelReason, setCancelReason] = useState('');
-  const [cancelMessage, setCancelMessage] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
 
   const handleCancelOrder = (orderId) => {
     if (!cancelReason.trim()) {
-      setCancelMessage('Please provide a reason for cancellation.');
+      alert('Please provide a reason for cancellation.');
       return;
     }
-
-    // Set loading state
+  
     setIsCancelling(true);
-    setCancelMessage('Cancelling order...');
-
-    // Simulate cancellation process with a timeout
-    setTimeout(() => {
-      // Here, you can replace the logic with an actual API call to cancel the order.
-      const updatedOrders = orders.filter((order) => order.id !== orderId);
-
-      // Update orders state in context (this will trigger a re-render)
-      setOrders(updatedOrders);
-
-      // Update cancellation message
-      setCancelMessage('Order canceled successfully!');
-      setIsCancelling(false);
-      setCancelReason(''); // Reset the cancel reason input
-    }, 1000);
+  
+    // Remove only the specific order that is being cancelled
+    const updatedOrders = orders.filter((order) => order.id !== orderId);
+  
+    setOrders(updatedOrders); // Update orders list
+  
+    setCancelReason('');
+    setIsCancelling(false); 
+    setSelectedOrder(null); // Deselect the cancelled order
+  
+    // Show alert when the order is successfully cancelled
+    alert('Order cancelled successfully!');
   };
 
   const handleReviewSubmit = (order) => {
     if (!review.trim() || rating === 0) return;
-    // Assuming `order.shopId` identifies the shop linked to the order
-    const newReview = {
-      orderId: order.id,
-      shopId: order.shopId,
-      reviewText: review.trim(),
-      rating,
-      date: new Date().toLocaleString(),
-    };
-    console.log('Review submitted:', newReview); // Replace with actual backend/API integration
+    // Call addReview to save the review
+    addReview(order.id, order.shopId, review.trim(), rating);
+
     setReview('');
     setRating(0);
     setSelectedOrder(null);
@@ -62,6 +51,17 @@ function OrdersPage() {
             <div key={order.id} className="border p-4 rounded-lg shadow">
               <h2 className="text-lg font-bold">Order #{order.id}</h2>
               <p className="text-gray-500">Date: {order.date}</p>
+
+              {/* Display Shop Name and Location for Pickup */}
+              <p className="text-gray-700 mt-2">
+                <strong>Shop Name:</strong> {order.shopName || 'Shop not available'}
+              </p>
+              <p className="text-gray-700 mt-2">
+                <strong>Pickup Location:</strong> 
+                {order.shopLocation || 'Location not available'}
+              </p>
+
+              {/* Display Items in the Order */}
               <ul className="mt-2 space-y-2">
                 {order.items.map((item) => (
                   <li key={item.id} className="flex justify-between">
@@ -101,20 +101,9 @@ function OrdersPage() {
                 </div>
               )}
 
-              {/* Cancellation Status Message */}
-              {cancelMessage && (
-                <p
-                  className={`mt-2 text-sm ${
-                    cancelMessage.includes('success') ? 'text-green-500' : 'text-red-500'
-                  }`}
-                >
-                  {cancelMessage}
-                </p>
-              )}
-
               {/* Review Section */}
               <div className="mt-4">
-                <h3 className="text-lg font-semibold">Leave a Review</h3>
+                <h3 className="text-lg font-semibold">Leave a Review for {order.shopName}</h3>
                 <textarea
                   placeholder="Write your review here..."
                   value={review}
@@ -136,11 +125,7 @@ function OrdersPage() {
                           className="hidden"
                         />
                         <FaStar
-                          className={`cursor-pointer transition ${
-                            ratingValue <= (hover || rating)
-                              ? 'text-yellow-400'
-                              : 'text-gray-300'
-                          }`}
+                          className={`cursor-pointer transition ${ratingValue <= (hover || rating) ? 'text-yellow-400' : 'text-gray-300'}`}
                           size={20}
                           onMouseEnter={() => setHover(ratingValue)}
                           onMouseLeave={() => setHover(0)}
@@ -161,7 +146,7 @@ function OrdersPage() {
           ))}
         </div>
       ) : (
-        <p className="text-gray-500">You have no orders yet.</p>
+        <p>You have no orders.</p>
       )}
     </div>
   );

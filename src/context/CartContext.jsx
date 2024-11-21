@@ -3,39 +3,40 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 // Create CartContext
 const CartContext = createContext();
 
-// CartProvider to provide the cart state and actions to the app
+// CartProvider to provide the cart state, orders, and reviews to the app
 export function CartProvider({ children }) {
   const [cart, setCart] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [reviews, setReviews] = useState([]);
 
-  // Load orders from localStorage on initial render
+  // Load orders and reviews from localStorage on initial render
   useEffect(() => {
     const storedOrders = JSON.parse(localStorage.getItem('orders')) || [];
     setOrders(storedOrders);
+    const storedReviews = JSON.parse(localStorage.getItem('reviews')) || [];
+    setReviews(storedReviews);
   }, []);
 
-  // Save orders to localStorage whenever they change
+  // Save orders and reviews to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('orders', JSON.stringify(orders));
-  }, [orders]);
+    localStorage.setItem('reviews', JSON.stringify(reviews));
+  }, [orders, reviews]);
 
   // Add item to the cart
   const addToCart = (product) => {
     setCart((prevCart) => {
-      // Check if the product already exists in the cart (same productId and sellerId)
       const existingProduct = prevCart.find(
         (item) => item.id === product.id && item.sellerId === product.sellerId
       );
 
       if (existingProduct) {
-        // If the product exists, increase its quantity
         return prevCart.map((item) =>
           item.id === product.id && item.sellerId === product.sellerId
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       } else {
-        // If the product doesn't exist, add it with quantity 1
         return [...prevCart, { ...product, quantity: 1 }];
       }
     });
@@ -49,7 +50,6 @@ export function CartProvider({ children }) {
           ? { ...item, quantity: item.quantity - 1 }
           : item
       );
-      // Remove product if quantity is 0
       return updatedCart.filter((item) => item.quantity > 0);
     });
   };
@@ -62,14 +62,15 @@ export function CartProvider({ children }) {
   // Checkout: Save cart as a new order and clear the cart
   const checkout = () => {
     const newOrder = {
-      id: Date.now(), // Unique order ID
+      id: Date.now(),
       items: cart,
       total: getTotalPrice(),
       date: new Date().toLocaleString(),
+      shopLocation: "Sample Shop Location", 
     };
 
-    setOrders((prevOrders) => [...prevOrders, newOrder]); // Add new order to state
-    clearCart(); // Clear the cart after checkout
+    setOrders((prevOrders) => [...prevOrders, newOrder]);
+    clearCart();
   };
 
   // Get total price of items in the cart
@@ -77,16 +78,32 @@ export function CartProvider({ children }) {
     return cart.reduce((total, product) => total + product.price * product.quantity, 0);
   };
 
+  // Add a review for an order
+  const addReview = (orderId, shopId, reviewText, rating) => {
+    const newReview = {
+      orderId,
+      shopId,
+      reviewText,
+      rating,
+      date: new Date().toLocaleString(),
+    };
+
+    setReviews((prevReviews) => [...prevReviews, newReview]);
+  };
+
   return (
     <CartContext.Provider
       value={{
         cart,
         orders,
+        setOrders, 
+        reviews, 
         addToCart,
         removeFromCart,
         clearCart,
         checkout,
         getTotalPrice,
+        addReview, 
       }}
     >
       {children}

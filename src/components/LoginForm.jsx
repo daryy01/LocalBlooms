@@ -29,8 +29,11 @@ const LoginForm = () => {
       setSuccess(true);
       setTimeout(() => {
         navigate('/home');
+      setTimeout(() => {
+          window.location.reload(); // Refresh the page after redirect
+        }, 500);
       }, 2000); 
-
+    
     } catch (error) {
       console.error(error); 
       setError(error.response?.data?.message || 'An error occurred. Please try again.');

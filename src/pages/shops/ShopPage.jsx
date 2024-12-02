@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { sellers } from '../../services/dataService';
 
 function ShopPage() {
+
   return (
     <div className="container mx-auto p-6 bg-gradient-to-r from-pink-50 to-purple-50">
       <h1 className="text-4xl font-extrabold text-center text-pink-700 mb-10">Shop by Sellers</h1>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
 import axios from 'axios';
 
 const RegisterForm = () => {
@@ -9,6 +9,7 @@ const RegisterForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -27,6 +28,11 @@ const RegisterForm = () => {
       setName('');
       setEmail('');
       setPassword('');
+
+      // Redirect to the login page after 2 seconds
+      setTimeout(() => {
+        navigate('/login');
+      }, 1000);
     } catch (error) {
       setError(error.response?.data || 'An error occurred.');
     } finally {
@@ -35,7 +41,11 @@ const RegisterForm = () => {
   };
 
   return (
-    <form onSubmit={handleRegister} className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full mx-auto" style={{ backgroundImage: "url('/images/floral-background.jpg')", backgroundSize: 'cover' }}>
+    <form
+      onSubmit={handleRegister}
+      className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full mx-auto"
+      style={{ backgroundImage: "url('/images/floral-background.jpg')", backgroundSize: 'cover' }}
+    >
       <h2 className="text-2xl font-bold mb-6 text-center text-pink-700">Register on LocalBlooms</h2>
 
       {error && <p className="text-red-500 text-center mb-4">{error}</p>}

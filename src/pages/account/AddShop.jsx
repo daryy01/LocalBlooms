@@ -1,44 +1,18 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { addShop } from '../../services/dataService';  
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 
 const AddShop = () => {
   const [shopName, setShopName] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
   const [image, setImage] = useState(null);
-  const [products, setProducts] = useState([{ name: '', image: null }]);
+  const [products, setProducts] = useState([{ name: '', price: '', image: '' }]);  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // Getting the token from local storage (or any other source)
-  const token = localStorage.getItem('token'); 
-
-  const handleImageChange = (e) => {
-    setImage(e.target.files[0]);
-  };
-
-  const handleProductChange = (index, event) => {
-    const updatedProducts = [...products];
-    updatedProducts[index][event.target.name] = event.target.value;
-    setProducts(updatedProducts);
-  };
-
-  const handleAddProduct = () => {
-    setProducts([...products, { name: '', image: null }]);
-  };
-
-  const handleProductImageChange = (index, e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const updatedProducts = [...products];
-      updatedProducts[index].image = file;
-      setProducts(updatedProducts);
-    }
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
@@ -49,136 +23,163 @@ const AddShop = () => {
       return;
     }
 
-    const formData = new FormData();
-    formData.append('shopName', shopName);
-    formData.append('shopDescription', description);
-    formData.append('shopLocation', location);
-    formData.append('shopImage', image);
+    const newShop = {
+      name: shopName,
+      description,
+      location,
+      image: URL.createObjectURL(image),  
+    };
 
-    products.forEach((product, index) => {
-      formData.append(`productName[${index}]`, product.name);
-      if (product.image) {
-        formData.append(`productImage[${index}]`, product.image);
-      }
-    });
+    const validProducts = products.filter(product => product.name && product.price && product.image); 
+    addShop(newShop, validProducts);
 
-    try {
-      const response = await axios.post('http://localhost:5000/api/add-shop', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    setShopName('');
+    setDescription('');
+    setLocation('');
+    setImage(null);
+    setProducts([{ name: '', price: '', image: '' }]); 
+    setIsLoading(false);
 
-      if (response.status === 201) {
-        setError(''); // Reset error on success
-        navigate('/account');
-      } else {
-        setError('Error adding shop. Please try again later.');
-      }
-    } catch (error) {
-      console.error(error);
-      setError('Error adding shop. Please try again later.');
-    } finally {
-      setIsLoading(false);
-    }
+   
+    navigate('/shops');  
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    setImage(file);
+  };
+
+  const handleProductChange = (index, e) => {
+    const { name, value } = e.target;
+    const newProducts = [...products];
+    newProducts[index][name] = value;
+    setProducts(newProducts);
+  };
+
+  const handleAddProduct = () => {
+    setProducts([...products, { name: '', price: '', image: '' }]);  
+  };
+
+  const handleProductImageChange = (index, e) => {
+    const file = e.target.files[0];
+    const newProducts = [...products];
+    newProducts[index].image = URL.createObjectURL(file);  
+    setProducts(newProducts);
   };
 
   return (
-    <div className="max-w-lg mx-auto p-6 bg-gradient-to-br from-pink-200 via-pink-300 to-pink-100 rounded-xl shadow-lg">
-      <h2 className="text-3xl font-extrabold text-center mb-6 text-pink-600">Add Your Floral Shop</h2>
-      <form onSubmit={handleSubmit} className="space-y-6 bg-white bg-opacity-90 p-6 rounded-lg">
-        
-        {error && <div className="bg-red-500 text-white p-2 rounded-md mb-4">{error}</div>}
-
-        <div className="space-y-2">
-          <label className="block text-lg text-gray-700">Shop Name</label>
-          <input
-            type="text"
-            value={shopName}
-            onChange={(e) => setShopName(e.target.value)}
-            className="w-full p-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
-            required
+    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg mt-10">
+      <h2 className="text-3xl font-semibold text-center text-pink-600 mb-6">Add a New Flower Shop</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-xl font-medium text-gray-700">Shop Name</label>
+          <input 
+            type="text" 
+            value={shopName} 
+            onChange={(e) => setShopName(e.target.value)} 
+            required 
+            className="w-full p-3 mt-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+            placeholder="Enter your flower shop's name"
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-lg text-gray-700">Shop Description</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full p-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
-            required
+        <div>
+          <label className="block text-xl font-medium text-gray-700">Description</label>
+          <textarea 
+            value={description} 
+            onChange={(e) => setDescription(e.target.value)} 
+            required 
+            className="w-full p-3 mt-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+            placeholder="Describe your flower shop's offerings"
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-lg text-gray-700">Shop Location</label>
-          <input
-            type="text"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="w-full p-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
-            required
+        <div>
+          <label className="block text-xl font-medium text-gray-700">Location</label>
+          <input 
+            type="text" 
+            value={location} 
+            onChange={(e) => setLocation(e.target.value)} 
+            required 
+            className="w-full p-3 mt-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+            placeholder="Enter your shop's location"
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-lg text-gray-700">Shop Image</label>
-          <input
-            type="file"
-            onChange={handleImageChange}
-            className="w-full p-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
-            required
+        <div>
+          <label className="block text-xl font-medium text-gray-700">Shop Image</label>
+          <input 
+            type="file" 
+            accept="image/*" 
+            onChange={handleImageChange} 
+            required 
+            className="w-full p-3 mt-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
           />
         </div>
 
-        <div className="space-y-4">
-          <h3 className="text-2xl font-semibold text-pink-600">Products</h3>
+        {/* Product Form Section */}
+        <div>
+          <h3 className="text-2xl font-semibold text-pink-600 mt-8">Products</h3>
           {products.map((product, index) => (
-            <div key={index} className="space-y-4">
-              <div className="space-y-2">
-                <label className="block text-lg text-gray-700">Product Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={product.name}
-                  onChange={(e) => handleProductChange(index, e)}
-                  className="w-full p-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
-                  required
+            <div key={index} className="space-y-4 p-4 bg-gray-50 border rounded-md mt-4">
+              <div>
+                <label className="block text-lg font-medium text-gray-700">Product Name</label>
+                <input 
+                  type="text" 
+                  name="name" 
+                  value={product.name} 
+                  onChange={(e) => handleProductChange(index, e)} 
+                  required 
+                  className="w-full p-3 mt-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+                  placeholder="Enter product name"
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="block text-lg text-gray-700">Product Image</label>
-                <input
-                  type="file"
-                  name="image"
-                  onChange={(e) => handleProductImageChange(index, e)}
-                  className="w-full p-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+              <div>
+                <label className="block text-lg font-medium text-gray-700">Price</label>
+                <input 
+                  type="number" 
+                  name="price" 
+                  value={product.price} 
+                  onChange={(e) => handleProductChange(index, e)} 
+                  required 
+                  className="w-full p-3 mt-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
+                  placeholder="Enter product price"
+                />
+              </div>
+
+              <div>
+                <label className="block text-lg font-medium text-gray-700">Product Image</label>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={(e) => handleProductImageChange(index, e)} 
+                  required 
+                  className="w-full p-3 mt-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-400"
                 />
               </div>
             </div>
           ))}
-
-          <button
-            type="button"
-            onClick={handleAddProduct}
-            className="w-full bg-pink-500 text-white p-3 rounded-md mt-4 hover:bg-pink-600 transition duration-200"
+          <button 
+            type="button" 
+            onClick={handleAddProduct} 
+            className="mt-4 bg-pink-600 text-white py-2 px-4 rounded-md hover:bg-pink-700"
           >
             Add Another Product
           </button>
         </div>
 
-        <div className="mt-6">
-          <button
-            type="submit"
-            className="w-full bg-pink-600 text-white py-3 rounded-md hover:bg-pink-700 transition duration-200"
-            disabled={isLoading}
+        <div className="mt-8">
+          <button 
+            type="submit" 
+            disabled={isLoading} 
+            className="w-full py-3 bg-pink-600 text-white rounded-md hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-400"
           >
-            {isLoading ? 'Submitting...' : 'Submit Shop'}
+            {isLoading ? 'Adding Shop...' : 'Add Flower Shop'}
           </button>
         </div>
+
+        {error && <p className="text-red-600 text-center mt-4">{error}</p>}
       </form>
     </div>
   );

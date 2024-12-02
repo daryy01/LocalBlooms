@@ -5,17 +5,26 @@ const CartContext = createContext();
 
 // CartProvider to provide the cart state, orders, and reviews to the app
 export function CartProvider({ children }) {
-  const [cart, setCart] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [reviews, setReviews] = useState([]);
+  const [cart, setCart] = useState(() => {
+    // Load cart from localStorage on initial render
+    const storedCart = localStorage.getItem('cart');
+    return storedCart ? JSON.parse(storedCart) : [];
+  });
+  const [orders, setOrders] = useState(() => {
+    // Load orders from localStorage on initial render
+    const storedOrders = localStorage.getItem('orders');
+    return storedOrders ? JSON.parse(storedOrders) : [];
+  });
+  const [reviews, setReviews] = useState(() => {
+    // Load reviews from localStorage on initial render
+    const storedReviews = localStorage.getItem('reviews');
+    return storedReviews ? JSON.parse(storedReviews) : [];
+  });
 
-  // Load orders and reviews from localStorage on initial render
+  // Save cart to localStorage whenever it changes
   useEffect(() => {
-    const storedOrders = JSON.parse(localStorage.getItem('orders')) || [];
-    setOrders(storedOrders);
-    const storedReviews = JSON.parse(localStorage.getItem('reviews')) || [];
-    setReviews(storedReviews);
-  }, []);
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }, [cart]);
 
   // Save orders and reviews to localStorage whenever they change
   useEffect(() => {
@@ -78,37 +87,52 @@ export function CartProvider({ children }) {
     return cart.reduce((total, product) => total + product.price * product.quantity, 0);
   };
 
-  // Add a review for an order
+  // CartContext.js (Update addReview method and add a function to get reviews by seller)
   const addReview = (orderId, shopId, reviewText, rating) => {
     const newReview = {
       orderId,
-      shopId,
       reviewText,
       rating,
       date: new Date().toLocaleString(),
     };
-
-    setReviews((prevReviews) => [...prevReviews, newReview]);
+  
+    setReviews((prevReviews) => {
+      const updatedReviews = { ...prevReviews };
+      if (!updatedReviews[shopId]) updatedReviews[shopId] = [];  // Initialize the shop's review array if it doesn't exist
+      updatedReviews[shopId].push(newReview);
+      return updatedReviews;
+    });
+  
+    // Save reviews by sellerId in localStorage
+    const sellerReviewsKey = `reviews_${shopId}`;
+    const storedReviews = JSON.parse(localStorage.getItem(sellerReviewsKey)) || [];
+    localStorage.setItem(sellerReviewsKey, JSON.stringify([...storedReviews, newReview]));
+  };
+  
+  const getReviewsBySeller = (sellerId) => {
+    const sellerReviewsKey = `reviews_${sellerId}`;
+    return JSON.parse(localStorage.getItem(sellerReviewsKey)) || [];
   };
 
-  return (
-    <CartContext.Provider
-      value={{
-        cart,
-        orders,
-        setOrders, 
-        reviews, 
-        addToCart,
-        removeFromCart,
-        clearCart,
-        checkout,
-        getTotalPrice,
-        addReview, 
-      }}
-    >
-      {children}
-    </CartContext.Provider>
-  );
+return (
+  <CartContext.Provider
+    value={{
+      cart,
+      orders,
+      setOrders,
+      reviews,
+      addToCart,
+      removeFromCart,
+      clearCart,
+      checkout,
+      getTotalPrice,
+      addReview,
+      getReviewsBySeller,
+    }}
+  >
+    {children}
+  </CartContext.Provider>
+);
 }
 
 // Custom hook to use the CartContext

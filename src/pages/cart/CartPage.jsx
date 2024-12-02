@@ -7,39 +7,55 @@ const CartPage = () => {
   const { cart, removeFromCart, getTotalPrice, clearCart, checkout } = useCart();
   const [user, setUser] = useState(null);
   const [error, setError] = useState('');
+  const [notification, setNotification] = useState('');
+  const [showNotification, setShowNotification] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
-      setUser(JSON.parse(userData)); // Parse and set user data
+      setUser(JSON.parse(userData));
     } else {
       setError('User not found. Please log in.');
-      navigate('/login'); // Redirect to login if no user data found
+      navigate('/login');
     }
   }, [navigate]);
 
   const handleCheckout = () => {
     if (!user) return;
 
-    const newOrder = checkout(user.id); // Save the order to user's history
-    alert('Order placed successfully for pickup!');
+    checkout(user.id);
 
-    navigate('/account'); // Redirect to the account page
+    setNotification('Your order has been successfully placed for pickup!');
+    setShowNotification(true);
+
+    setTimeout(() => {
+      setShowNotification(false);
+      navigate('/account');
+    }, 3000);
   };
 
   const handleRemoveFromCart = (productId, sellerId) => {
     removeFromCart(productId, sellerId);
   };
 
-  // Function to clear all items from the cart
   const handleClearCart = () => {
-    clearCart(); // This function should be implemented in your context to clear the cart
-    alert('All items have been removed from the cart.');
+    clearCart();
+    setNotification('All items have been removed from the cart.');
+    setShowNotification(true);
+
+    setTimeout(() => setShowNotification(false), 3000);
   };
 
   return (
-    <div className="container mx-auto p-8">
+    <div className="container mx-auto p-8 relative">
+      {/* Notification */}
+      {showNotification && (
+        <div className="fixed top-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transition-all duration-300 z-50">
+          {notification}
+        </div>
+      )}
+
       <h1 className="text-3xl font-semibold text-center text-pink-700 mb-8">Your Shopping Cart</h1>
 
       {error && <p className="text-center text-red-500">{error}</p>}
@@ -56,7 +72,11 @@ const CartPage = () => {
                 key={`${product.id}-${product.sellerId}`}
                 className="bg-white p-6 rounded-lg shadow-xl transition-transform transform hover:scale-105 hover:shadow-2xl"
               >
-                <img src={product.image} alt={product.name} className="w-full h-48 object-cover mb-4 rounded-lg" />
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-full h-48 object-cover mb-4 rounded-lg"
+                />
                 <h2 className="text-xl font-semibold text-gray-800">{product.name}</h2>
                 <p className="text-lg text-gray-600 mt-2">Price: ₱{product.price}</p>
                 <p className="text-sm text-gray-500 mt-2">Quantity: {product.quantity}</p>
@@ -77,17 +97,13 @@ const CartPage = () => {
 
             <div className="space-x-4">
               <button
-                onClick={handleClearCart} // Call the function to clear the cart
+                onClick={handleClearCart}
                 className="bg-red-500 text-white py-2 px-6 rounded-lg hover:bg-red-600"
               >
                 Remove All Items
               </button>
               <button
-                onClick={() => {
-                  checkout();
-                  alert('Order placed successfully!');
-                  navigate('/orders'); // Navigate to the orders page after checkout
-                }}
+                onClick={handleCheckout}
                 className="bg-pink-500 text-white py-2 px-6 rounded-lg hover:bg-pink-600"
               >
                 Checkout

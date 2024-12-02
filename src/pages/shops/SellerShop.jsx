@@ -1,43 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { useCart } from '../../context/CartContext';
 import { FaStar } from 'react-icons/fa';
+import { useCart } from '../../context/CartContext'; 
 import { products, flowerAddOns, sellers } from '../../services/dataService';
 
 function SellerShop() {
   const { sellerId } = useParams();
-  const sellerProducts = products[sellerId] || [];
-  const coreAddOns = flowerAddOns.coreAddOns;
-  const sellerAddOnsList = flowerAddOns.sellerAddOns[sellerId] || [];
-  const { cart, addToCart, removeFromCart } = useCart();
+  const parsedSellerId = parseInt(sellerId, 10);
+  const sellerProducts = products[parsedSellerId] || [];
+  const coreAddOns = flowerAddOns?.coreAddOns || [];
+  const sellerAddOnsList = flowerAddOns?.sellerAddOns?.[parsedSellerId] || [];
+  const { addToCart } = useCart();  
   const [review, setReview] = useState('');
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [submittedReviews, setSubmittedReviews] = useState([]);
+  const [notification, setNotification] = useState('');
+  const [showNotification, setShowNotification] = useState(false);
+  const isLoggedIn = Boolean(localStorage.getItem('authToken')); 
 
-  // Load existing reviews from localStorage
-  useEffect(() => {
-    const storedReviews = JSON.parse(localStorage.getItem(`reviews_${sellerId}`)) || [];
-    setSubmittedReviews(storedReviews);
-  }, [sellerId]);
-
-  // Save reviews to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem(`reviews_${sellerId}`, JSON.stringify(submittedReviews));
-  }, [submittedReviews, sellerId]);
-
-  const isLoggedIn = Boolean(localStorage.getItem('authToken'));
-
-  const handleAddToCart = (product) => {
-    if (!isLoggedIn) return;
-    const productWithSeller = { ...product, sellerId: parseInt(sellerId) };
-    addToCart(productWithSeller);
+  const getReviewsBySeller = (id) => {
+    const reviews = localStorage.getItem(`reviews_${id}`);
+    return reviews ? JSON.parse(reviews) : [];
   };
 
+  useEffect(() => {
+    const reviews = getReviewsBySeller(parsedSellerId);
+    setSubmittedReviews(reviews);
+  }, [parsedSellerId]);
+
+  useEffect(() => {
+    localStorage.setItem(`reviews_${parsedSellerId}`, JSON.stringify(submittedReviews));
+  }, [submittedReviews, parsedSellerId]);
+
+  
+  const handleAddToCart = (product) => {
+    if (!isLoggedIn) return;
+    const productWithSeller = { ...product, sellerId: parsedSellerId };
+    addToCart(productWithSeller);
+
+    
+    setNotification(`${product.name} has been added to your cart!`);
+    setShowNotification(true);
+
+   
+    setTimeout(() => {
+      setShowNotification(false);
+    }, 3000);
+  };
+
+  
   const handleSubmitReview = () => {
     if (!review.trim() || rating === 0) return;
     const newReview = {
-      sellerId: parseInt(sellerId),
+      sellerId: parsedSellerId,
       reviewText: review.trim(),
       rating,
       date: new Date().toLocaleString(),
@@ -48,8 +64,17 @@ function SellerShop() {
   };
 
   return (
-    <div className="container mx-auto p-6 bg-pink-50">
-      <h1 className="text-3xl font-bold text-center text-pink-600 mb-6">{sellers[sellerId - 1].name}</h1>
+    <div className="container mx-auto p-6 bg-pink-50 relative">
+      {/* Notification */}
+      {showNotification && (
+        <div className="fixed top-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transition-all duration-300 z-50">
+          {notification}
+        </div>
+      )}
+
+      <h1 className="text-3xl font-bold text-center text-pink-600 mb-6">
+        {sellers[parsedSellerId - 1]?.name || 'Seller Shop'}
+      </h1>
 
       {/* Products Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -77,7 +102,6 @@ function SellerShop() {
               >
                 Add to Cart
               </button>
-              
             </div>
           </div>
         ))}
@@ -92,7 +116,7 @@ function SellerShop() {
             <p className="font-semibold text-gray-700">{addon.name}</p>
             <p className="text-gray-600">₱{addon.price}</p>
             <button
-              onClick={() => addToCart(addon)}
+              onClick={() => handleAddToCart(addon)}
               disabled={!isLoggedIn}
               className={`mt-2 py-1 px-4 rounded-lg shadow-md transition ${
                 isLoggedIn
